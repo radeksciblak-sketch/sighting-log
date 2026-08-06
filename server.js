@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_KEY = process.env.YT_API_KEY;
-
+ 
 const CHANNELS = [
   { name: "San Diego Zoo", id: "UCC5NfQ6Mf0dq_eEwv4P_hWA" },
   { name: "San Diego Zoo Kids", id: "UCY2PPrRnSwy6zypgRYK42og" },
@@ -16,20 +16,20 @@ const CHANNELS = [
   { name: "Smithsonian's National Zoo", handle: "SmithsoniansNationalZoo" },
   { name: "Latest Sightings", handle: "LatestSightings" }
 ];
-
-const REFRESH_MS = 10 * 60 * 1000; // 10 minutes
-
+ 
+const REFRESH_MS = 2 * 60 * 1000; // 2 minuty
+ 
 let cache = [];
 let lastRefreshed = null;
 const uploadsIdCache = {};
-
+ 
 async function fetchJSON(url) {
   const res = await fetch(url);
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body?.error?.message || ('HTTP ' + res.status));
   return body;
 }
-
+ 
 async function resolveUploadsId(ch) {
   const key = ch.id || ch.handle;
   if (uploadsIdCache[key]) return uploadsIdCache[key];
@@ -43,7 +43,7 @@ async function resolveUploadsId(ch) {
   uploadsIdCache[key] = uploadsId;
   return uploadsId;
 }
-
+ 
 async function refreshChannel(ch) {
   const uploadsId = await resolveUploadsId(ch);
   const data = await fetchJSON(
@@ -61,7 +61,7 @@ async function refreshChannel(ch) {
     error: null
   };
 }
-
+ 
 async function refreshAll() {
   if (!API_KEY) {
     cache = CHANNELS.map(ch => ({ name: ch.name, error: 'Brak YT_API_KEY na serwerze' }));
@@ -86,19 +86,19 @@ async function refreshAll() {
   lastRefreshed = new Date().toISOString();
   console.log('Odświeżono o', lastRefreshed);
 }
-
+ 
 refreshAll();
 setInterval(refreshAll, REFRESH_MS);
-
+ 
 app.get('/api/channels', (req, res) => {
   res.json({ items: cache, lastRefreshed });
 });
-
+ 
 app.get('/', (req, res) => {
   res.set('Content-Type', 'text/html; charset=utf-8');
   res.send(PAGE_TEMPLATE);
 });
-
+ 
 const PAGE_TEMPLATE = `<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -136,7 +136,7 @@ h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(30px,5vw,44px);m
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow"><span class="dot"></span>Na żywo — serwer odświeża co 10 minut</div>
+    <div class="eyebrow"><span class="dot"></span>Na żywo — serwer odświeża co 2 minuty</div>
     <h1>Sighting Log</h1>
     <div class="sub">Ta strona działa cały czas na serwerze, nawet gdy nie masz otwartego czatu ani karty przeglądarki gdzieś indziej — wystarczy ją odwiedzić.</div>
   </header>
@@ -174,5 +174,6 @@ setInterval(load, 60000);
 </script>
 </body>
 </html>`;
-
+ 
 app.listen(PORT, () => console.log('Nasłuchuję na porcie ' + PORT));
+ 
